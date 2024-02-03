@@ -34,6 +34,7 @@ FILE_EXTENSION="${VMWARE_FILE_PATH##*.}"
 echo "Creating new VM in Proxmox..."
 qm create "$VM_ID" --name "$VM_NAME" --memory 2048 --net0 virtio,bridge=vmbr0
 
+sleep 10
 
 # Function to convert and import disk
 convert_and_import_disk() {

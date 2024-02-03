@@ -29,6 +29,12 @@ fi
 
 FILE_EXTENSION="${VMWARE_FILE_PATH##*.}"
 
+
+# Create a new VM in Proxmox
+echo "Creating new VM in Proxmox..."
+qm create "$VM_ID" --name "$VM_NAME" --memory 2048 --net0 virtio,bridge=vmbr0
+
+
 # Function to convert and import disk
 convert_and_import_disk() {
     DISK_PATH="$1"
@@ -60,10 +66,6 @@ case $FILE_EXTENSION in
         exit 1
         ;;
 esac
-
-# Create a new VM in Proxmox
-echo "Creating new VM in Proxmox..."
-qm create "$VM_ID" --name "$VM_NAME" --memory 2048 --net0 virtio,bridge=vmbr0
 
 # Attach the disk to the VM
 echo "Attaching disk to VM..."

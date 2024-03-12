@@ -1,34 +1,33 @@
 #!/bin/bash
 
-
 # Path to the file containing the list of IP addresses
 HOSTS_FILE="hosts.txt"
 
 # Read IP addresses into an array
 mapfile -t HOSTS < "${HOSTS_FILE}"
 
-#HOSTS=("172.16.0.27")
-
 # Path to the local fluent-bit.conf file
 LOCAL_CONF_PATH="./fluent-bit.conf"
+LOCAL_CONF_PATH2="./parsers.conf"
 
 # Remote path where the fluent-bit.conf should be replaced
 REMOTE_CONF_PATH="/etc/fluent-bit/fluent-bit.conf"
+REMOTE_CONF_PATH2="/etc/fluent-bit/parsers.conf"
 
 # SSH User
 SSH_USER="root" # or "admin", depending on your setup
 
-# Function to check and install packages if they are not installed
-check_and_install_packages() {
+# Function to check and install Fluent Bit if not installed
+install_fluent_bit_if_needed() {
     local host=$1
-    local sshpass_cmd=$2
-    # Commands to check if packages are installed and install them if they are not
-    local check_install_cmd="DEBIAN_FRONTEND=noninteractive apt-get update && \
-    dpkg -l gpg software-properties-common curl || apt-get install -y gpg software-properties-common curl"
-    
-    # Execute the command
-    echo "Checking and installing packages on ${host}"
-    eval "$sshpass_cmd ssh -o StrictHostKeyChecking=no ${SSH_USER}@${host} \"$check_install_cmd\""
+    echo "Checking if Fluent Bit is installed on ${host}..."
+    if ! ssh "${SSH_USER}@${host}" '[ -d /etc/fluent-bit ]'; then
+        echo "Fluent Bit is not installed on ${host}. Installing..."
+        ssh "${SSH_USER}@${host}" "curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh"
+        echo "Fluent Bit installation completed on ${host}."
+    else
+        echo "Fluent Bit is already installed on ${host}."
+    fi
 }
 
 attempt_ssh() {
@@ -44,9 +43,6 @@ attempt_ssh() {
         local sshpass_cmd="sshpass -p \"$password\""
         # Use sshpass and ssh-copy-id to add the SSH key
         eval "$sshpass_cmd ssh-copy-id -o StrictHostKeyChecking=no ${SSH_USER}@${host}"
-
-        # After adding the SSH key, check and install necessary packages
-        check_and_install_packages "${host}" "$sshpass_cmd"
     fi
 }
 
@@ -58,6 +54,8 @@ verify_service_status() {
         echo "Fluent Bit service is running on ${host}."
     else
         echo "Fluent Bit service is not running on ${host}. Status: $service_status"
+        echo "Attempting to start Fluent Bit service on ${host}..."
+        ssh "${SSH_USER}@${host}" "systemctl start fluent-bit"
     fi
 }
 
@@ -66,12 +64,13 @@ for HOST in "${HOSTS[@]}"; do
 
     attempt_ssh "${HOST}"
 
-    ssh "${SSH_USER}@${HOST}" "apt-get update && apt-get install -y gpg software-properties-common curl"
-
-    ssh "${SSH_USER}@${HOST}" "curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh"
+    install_fluent_bit_if_needed "${HOST}"
 
     # Use SCP to copy the local configuration file to the remote path
     scp "$LOCAL_CONF_PATH" "${SSH_USER}@${HOST}:${REMOTE_CONF_PATH}"
+
+    # Use SCP to copy the local configuration file to the remote path
+    scp "$LOCAL_CONF_PATH2" "${SSH_USER}@${HOST}:${REMOTE_CONF_PATH2}"
 
     # Restart the Fluent Bit service on the remote machine
     ssh "${SSH_USER}@${HOST}" "systemctl restart fluent-bit && systemctl enable fluent-bit --now"

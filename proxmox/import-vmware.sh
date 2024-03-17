@@ -40,10 +40,11 @@ sleep 10
 convert_and_import_disk() {
     DISK_PATH="$1"
     echo "Converting disk image..."
-    qemu-img convert -f vmdk -O qcow2 "${DISK_PATH}" "/var/lib/vz/images/$VM_ID/vm-$VM_ID-disk-1.qcow2"
+    mkdir -p "/tmp/$VM_ID"
+    qemu-img convert -f vmdk -O qcow2 "${DISK_PATH}" "/tmp/$VM_ID/vm-$VM_ID-disk-1.qcow2"
 
     echo "Importing disk to Proxmox VM..."
-    qm importdisk "$VM_ID" "/var/lib/vz/images/$VM_ID/vm-$VM_ID-disk-1.qcow2" "$PROXMOX_STORAGE" --format qcow2
+    qm importdisk "$VM_ID" "/tmp/$VM_ID/vm-$VM_ID-disk-1.qcow2" "$PROXMOX_STORAGE" --format qcow2
 }
 
 case $FILE_EXTENSION in

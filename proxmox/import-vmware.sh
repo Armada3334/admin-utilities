@@ -71,7 +71,7 @@ esac
 
 # Attach the disk to the VM
 echo "Attaching disk to VM..."
-qm set "$VM_ID" --scsihw virtio-scsi-pci --scsi0 "$PROXMOX_STORAGE:vm-$VM_ID-disk-1"
+qm set "$VM_ID" --scsihw virtio-scsi-pci --scsi0 "/mnt/pve/$PROXMOX_STORAGE/$VM_ID/vm-$VM_ID-disk-0"
 
 # Clean up
 echo "Cleanup..."

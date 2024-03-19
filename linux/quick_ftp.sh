@@ -38,7 +38,7 @@ pasv_max_port=10100" | sudo tee /etc/vsftpd.conf > /dev/null
 
 # Create the shared folder
 sudo mkdir -p $SHARE_FOLDER_PATH
-sudo chmod -R 755 $SHARE_FOLDER_PATH
+sudo chmod -R 555 $SHARE_FOLDER_PATH
 sudo chown -R ftp:ftp $SHARE_FOLDER_PATH
 
 # Restart vsftpd to apply the changes

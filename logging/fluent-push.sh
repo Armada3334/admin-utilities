@@ -22,12 +22,12 @@ install_fluent_bit_if_needed() {
     local host=$1
     echo "Checking if Fluent Bit is installed on ${host}..."
     local service_status=$(ssh "${SSH_USER}@${host}" "systemctl is-active fluent-bit")
-    if [ "$service_status" != "active" ]; then
+    if [ "$service_status" == "active" ]; then
+        echo "Fluent Bit is already installed on ${host}."
+    else
         echo "Fluent Bit is not installed on ${host}. Installing..."
         ssh "${SSH_USER}@${host}" "curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh"
         echo "Fluent Bit installation completed on ${host}."
-    else
-        echo "Fluent Bit is already installed on ${host}."
     fi
 }
 
